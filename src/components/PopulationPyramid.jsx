@@ -158,28 +158,45 @@ export default function PopulationPyramid({
     const xAxis = chart.xAxes.push(
       am5xy.ValueAxis.new(root, {
         renderer: am5xy.AxisRendererX.new(root, {
-          minGridDistance: 50,
+          minGridDistance: 1,
         }),
-        numberFormat: "#.#",
+        min: -12,
+        max: 12,
+        strictMinMax: true,
+        extraMin: 0,
+        extraMax: 0,
+        numberFormat: "#",
       }),
     );
 
     xAxis.get("renderer").labels.template.setAll({
       fill: colors.text,
       fontSize: 12,
+      forceHidden: true,
     });
     xAxis.get("renderer").grid.template.setAll({
       stroke: colors.grid,
       strokeOpacity: 0.5,
+      forceHidden: true,
     });
 
-    xAxis.get("renderer").labels.template.adapters.add("text", (text) => {
-      if (text) {
-        const num = parseFloat(text);
-        return Math.abs(num).toFixed(1) + "%";
-      }
-      return text;
-    });
+    // Auto ticks round to a step that skips 12 (often 5), so the last
+    // readable label becomes 10%. Draw a fixed -12..12 scale instead.
+    for (let value = -12; value <= 12; value += 2) {
+      const range = xAxis.makeDataItem({ value, affectsMinMax: false });
+      xAxis.createAxisRange(range);
+      range.get("label").setAll({
+        text: `${Math.abs(value)}%`,
+        forceHidden: false,
+        fontSize: 12,
+        fill: colors.text,
+      });
+      range.get("grid").setAll({
+        stroke: colors.grid,
+        strokeOpacity: 0.5,
+        forceHidden: false,
+      });
+    }
 
     const maleSeries = chart.series.push(
       am5xy.ColumnSeries.new(root, {
